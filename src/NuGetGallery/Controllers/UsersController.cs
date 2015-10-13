@@ -56,17 +56,25 @@ namespace NuGetGallery
         public virtual ActionResult ConfirmationRequiredPost()
         {
             User user = GetCurrentUser();
-            var confirmationUrl = Url.ConfirmationUrl(
-                "Confirm", "Users", user.Username, user.EmailConfirmationToken);
+            var confirmationUrl = Url.ConfirmationUrl("Confirm", "Users", user.Username, user.EmailConfirmationToken);
 
             MessageService.SendNewAccountEmail(new MailAddress(user.UnconfirmedEmailAddress, user.Username), confirmationUrl);
-
-            var model = new ConfirmationViewModel
+            var alreadyConfirmed = user.UnconfirmedEmailAddress == null;
+            ConfirmationViewModel model;
+            if (!alreadyConfirmed)
             {
-                ConfirmingNewAccount = !(user.Confirmed),
-                UnconfirmedEmailAddress = user.UnconfirmedEmailAddress,
-                SentEmail = true,
-            };
+                model = new ConfirmationViewModel
+                {
+                    ConfirmingNewAccount = !(user.Confirmed),
+                    UnconfirmedEmailAddress = user.UnconfirmedEmailAddress,
+                    SentEmail = true,
+                };
+            }
+            else
+            {
+                model = new ConfirmationViewModel { AlreadyConfirmed = true };
+            }
+
             return View(model);
         }
 
@@ -211,46 +219,52 @@ namespace NuGetGallery
             if (!String.Equals(username, User.Identity.Name, StringComparison.OrdinalIgnoreCase))
             {
                 return View(new ConfirmationViewModel
-                    {
-                        WrongUsername = true,
-                        SuccessfulConfirmation = false,
-                    });
+                {
+                    WrongUsername = true,
+                    SuccessfulConfirmation = false,
+                });
             }
 
             var user = GetCurrentUser();
+
+            var alreadyConfirmed = user.UnconfirmedEmailAddress == null;
 
             string existingEmail = user.EmailAddress;
             var model = new ConfirmationViewModel
             {
                 ConfirmingNewAccount = String.IsNullOrEmpty(existingEmail),
-                SuccessfulConfirmation = true,
+                SuccessfulConfirmation = !alreadyConfirmed,
+                AlreadyConfirmed = alreadyConfirmed
             };
 
-            try
+            if (!alreadyConfirmed)
             {
-                if (!(await UserService.ConfirmEmailAddress(user, token)))
+                try
+                {
+                    if (!(await UserService.ConfirmEmailAddress(user, token)))
+                    {
+                        model.SuccessfulConfirmation = false;
+                    }
+                }
+                catch (EntityException)
                 {
                     model.SuccessfulConfirmation = false;
+                    model.DuplicateEmailAddress = true;
                 }
-            }
-            catch (EntityException)
-            {
-                model.SuccessfulConfirmation = false;
-                model.DuplicateEmailAddress = true;
-            }
-
-            // SuccessfulConfirmation is required so that the confirm Action isn't a way to spam people.
-            // Change notice not required for new accounts.
-            if (model.SuccessfulConfirmation && !model.ConfirmingNewAccount)
-            {
-                MessageService.SendEmailChangeNoticeToPreviousEmailAddress(user, existingEmail);
-
-                string returnUrl = HttpContext.GetConfirmationReturnUrl();
-                if (!String.IsNullOrEmpty(returnUrl))
+                // SuccessfulConfirmation is required so that the confirm Action isn't a way to spam people.
+                // Change notice not required for new accounts.
+                if (model.SuccessfulConfirmation && !model.ConfirmingNewAccount)
                 {
-                    TempData["Message"] = "You have successfully confirmed your email address!";
-                    return SafeRedirect(returnUrl);
+                    MessageService.SendEmailChangeNoticeToPreviousEmailAddress(user, existingEmail);
+
+                    string returnUrl = HttpContext.GetConfirmationReturnUrl();
+                    if (!String.IsNullOrEmpty(returnUrl))
+                    {
+                        TempData["Message"] = "You have successfully confirmed your email address!";
+                        return SafeRedirect(returnUrl);
+                    }
                 }
+
             }
 
             return View(model);
@@ -341,7 +355,7 @@ namespace NuGetGallery
         {
             var user = GetCurrentUser();
 
-            if(string.IsNullOrWhiteSpace(user.UnconfirmedEmailAddress))
+            if (string.IsNullOrWhiteSpace(user.UnconfirmedEmailAddress))
             {
                 return RedirectToAction(actionName: "Account", controllerName: "Users");
             }

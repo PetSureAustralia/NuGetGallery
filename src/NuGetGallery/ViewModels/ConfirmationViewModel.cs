@@ -15,5 +15,7 @@ namespace NuGetGallery
         public bool WrongUsername { get; set; }
 
         public bool DuplicateEmailAddress { get; set; }
+
+        public bool AlreadyConfirmed { get; set; }
     }
 }

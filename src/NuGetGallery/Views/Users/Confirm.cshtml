@@ -8,7 +8,7 @@
         Account confirmed! Your email address has been verified.
     </p>
     <p>
-        You may now upload packages and make your mark in 
+        You may now upload packages and make your mark in
         the community.
     </p>
 }
@@ -23,7 +23,7 @@ else
             Please check that you used the link from the right confirmation email, and are logged in as the right user.
         </p>
         <p>
-            <a href="@Url.ConfirmationRequired()" >Resend confirmation email.</a>
+            <a href="@Url.ConfirmationRequired()">Resend confirmation email.</a>
         </p>
     }
     else if (Model.DuplicateEmailAddress)
@@ -35,16 +35,25 @@ else
             You can change your email address to something else, or perhaps reuse the old account registered with this email address.
         </p>
     }
+    else if (Model.AlreadyConfirmed)
+    {
+        <p class="message">
+            Your email address has already been confirmed.
+        </p>
+    }
     else
     {
         <p class="message error">
             We could not confirm your email address. The token was invalid or expired.
         </p>
         <p>
-             Please check that you used the link from the confirmation email we sent. 
+            Please check that you used the link from the confirmation email we sent.
         </p>
     }
-    <p>
-        <a href="@Url.ConfirmationRequired()" >Resend confirmation email.</a>
-    </p>
+    if (!Model.AlreadyConfirmed)
+    {
+        <p>
+            <a href="@Url.ConfirmationRequired()">Resend confirmation email.</a>
+        </p>
+    }
 }

@@ -3,7 +3,7 @@
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using NuGetGallery.Authentication.Providers;
-
+using System.Web.Mvc;
 namespace NuGetGallery
 {
     public class AccountViewModel
@@ -27,6 +27,7 @@ namespace NuGetGallery
         [DataType(DataType.Password)]
         [Display(Name = "Current Password (for verification)")]
         [StringLength(64)]
+        [AllowHtml]
         public string Password { get; set; }
     }
 
@@ -34,10 +35,12 @@ namespace NuGetGallery
     {
         [Required]
         [Display(Name = "Old Password")]
+        [AllowHtml]
         public string OldPassword { get; set; }
 
         [Required]
         [Display(Name = "New Password")]
+        [AllowHtml]
         public string NewPassword { get; set; }
     }
 

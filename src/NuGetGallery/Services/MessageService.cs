@@ -60,9 +60,7 @@ namespace NuGetGallery
 
             var body = new StringBuilder();
             body.Append(request.FillIn(bodyTemplate, Config));
-            body.AppendFormat(CultureInfo.InvariantCulture, @"
-
-*Message sent from {0}*", Config.GalleryOwner.DisplayName);
+            body.AppendFormat(CultureInfo.InvariantCulture, @"*Message sent from {0}*", Config.GalleryOwner.DisplayName);
 
             using (var mailMessage = new MailMessage())
             {

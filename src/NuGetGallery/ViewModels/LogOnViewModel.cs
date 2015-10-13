@@ -5,7 +5,7 @@ using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Text.RegularExpressions;
 using NuGetGallery.Authentication.Providers;
-
+using System.Web.Mvc;
 namespace NuGetGallery
 {
     // I moved these in to one file because they are so interconnected it didn't
@@ -48,6 +48,7 @@ namespace NuGetGallery
         [Required]
         [DataType(DataType.Password)]
         [Hint("Passwords must be at least 7 characters long.")]
+        [AllowHtml]
         public string Password { get; set; }
 
         public SignInViewModel() { }
@@ -106,6 +107,7 @@ namespace NuGetGallery
         [DataType(DataType.Password)]
         [StringLength(64, MinimumLength = 7)]
         [Hint("Passwords must be at least 7 characters long.")]
+        [AllowHtml]
         public string Password { get; set; }
     }
 
